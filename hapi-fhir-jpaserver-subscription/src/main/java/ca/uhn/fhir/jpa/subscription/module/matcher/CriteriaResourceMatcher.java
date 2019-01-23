@@ -27,6 +27,7 @@ import ca.uhn.fhir.jpa.searchparam.MatchUrlService;
 import ca.uhn.fhir.jpa.searchparam.SearchParameterMap;
 import ca.uhn.fhir.jpa.searchparam.extractor.ResourceIndexedSearchParams;
 import ca.uhn.fhir.jpa.searchparam.registry.ISearchParamRegistry;
+import ca.uhn.fhir.jpa.subscription.module.cache.SubscriptionMatchingStrategy;
 import ca.uhn.fhir.model.api.IQueryParameterType;
 import ca.uhn.fhir.rest.api.Constants;
 import ca.uhn.fhir.rest.param.BaseParamWithPrefix;
@@ -45,31 +46,31 @@ import java.util.function.Predicate;
 
 @Service
 public class CriteriaResourceMatcher {
-
+	// FIXME KHS one place for this (currently two)
 	private static final String CRITERIA = "CRITERIA";
-	@Autowired
-	private MatchUrlService myMatchUrlService;
+
 	@Autowired
 	ISearchParamRegistry mySearchParamRegistry;
+	@Autowired
+	SubscriptionStrategyEvaluator mySubscriptionStrategyEvaluator;
 	@Autowired
 	FhirContext myFhirContext;
 
 	public SubscriptionMatchResult match(String theCriteria, IBaseResource theResource, ResourceIndexedSearchParams theSearchParams) {
-		SearchParameterMap searchParameterMap;
-		try {
-			searchParameterMap = myMatchUrlService.translateMatchUrl(theCriteria, myFhirContext.getResourceDefinition(theResource));
-		} catch (UnsupportedOperationException e) {
-			return new SubscriptionMatchResult(theCriteria, CRITERIA);
-		}
-		searchParameterMap.clean();
-		if (searchParameterMap.getLastUpdated() != null) {
-			return new SubscriptionMatchResult(Constants.PARAM_LASTUPDATED, "Standard Parameters not supported");
+
+		SubscriptionMatchingEvaluationResult subscriptionMatchingEvaluationResult = mySubscriptionStrategyEvaluator.determineStrategy(theCriteria);
+		if (subscriptionMatchingEvaluationResult.getMatchingStrategy() == SubscriptionMatchingStrategy.DATABASE) {
+			return new SubscriptionMatchResult(subscriptionMatchingEvaluationResult);
 		}
 
-		for (Map.Entry<String, List<List<? extends IQueryParameterType>>> entry : searchParameterMap.entrySet()) {
+		return getSubscriptionMatchResult(theResource, theSearchParams, subscriptionMatchingEvaluationResult.getSearchParameterMap());
+	}
+
+	private SubscriptionMatchResult getSubscriptionMatchResult(IBaseResource theResource, ResourceIndexedSearchParams theSearchParams, SearchParameterMap theSearchParameterMap) {
+		for (Map.Entry<String, List<List<? extends IQueryParameterType>>> entry : theSearchParameterMap.entrySet()) {
 			String theParamName = entry.getKey();
-			List<List<? extends IQueryParameterType>> theAndOrParams = entry.getValue();
-			SubscriptionMatchResult result = matchIdsWithAndOr(theParamName, theAndOrParams, theResource, theSearchParams);
+			List<List<? extends IQueryParameterType>> andOrParams = entry.getValue();
+			SubscriptionMatchResult result = matchIdsWithAndOr(theParamName, andOrParams, theResource, theSearchParams);
 			if (!result.matched()){
 				return result;
 			}
@@ -79,23 +80,6 @@ public class CriteriaResourceMatcher {
 
 	// This method is modelled from SearchBuilder.searchForIdsWithAndOr()
 	private SubscriptionMatchResult matchIdsWithAndOr(String theParamName, List<List<? extends IQueryParameterType>> theAndOrParams, IBaseResource theResource, ResourceIndexedSearchParams theSearchParams) {
-		if (theAndOrParams.isEmpty()) {
-			return new SubscriptionMatchResult(true, CRITERIA);
-		}
-
-		if (hasQualifiers(theAndOrParams)) {
-
-			return new SubscriptionMatchResult(theParamName, "Standard Parameters not supported.");
-
-		}
-		if (hasPrefixes(theAndOrParams)) {
-
-			return new SubscriptionMatchResult(theParamName, "Prefixes not supported.");
-
-		}
-		if (hasChain(theAndOrParams)) {
-			return new SubscriptionMatchResult(theParamName, "Chained references are not supported");
-		}
 		switch (theParamName) {
 			case IAnyResource.SP_RES_ID:
 
@@ -164,17 +148,4 @@ public class CriteriaResourceMatcher {
 		return theNextAnd.stream().anyMatch(token -> theSearchParams.matchParam(theResourceName, theParamName, paramDef, token));
 	}
 
-	private boolean hasChain(List<List<? extends IQueryParameterType>> theAndOrParams) {
-		return theAndOrParams.stream().flatMap(List::stream).anyMatch(param -> param instanceof ReferenceParam && ((ReferenceParam)param).getChain() != null);
-	}
-
-	private boolean hasQualifiers(List<List<? extends IQueryParameterType>> theAndOrParams) {
-		return theAndOrParams.stream().flatMap(List::stream).anyMatch(param -> param.getQueryParameterQualifier() != null);
-	}
-
-	private boolean hasPrefixes(List<List<? extends IQueryParameterType>> theAndOrParams) {
-		Predicate<IQueryParameterType> hasPrefixPredicate = param -> param instanceof BaseParamWithPrefix &&
-			((BaseParamWithPrefix) param).getPrefix() != null;
-		return theAndOrParams.stream().flatMap(List::stream).anyMatch(hasPrefixPredicate);
-	}
 }

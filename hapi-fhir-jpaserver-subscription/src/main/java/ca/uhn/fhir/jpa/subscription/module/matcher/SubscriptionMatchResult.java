@@ -43,6 +43,10 @@ public class SubscriptionMatchResult {
 		this.myMatcherShortName = theMatcherShortName;
 	}
 
+	public SubscriptionMatchResult(SubscriptionMatchingEvaluationResult theSubscriptionMatchingEvaluationResult) {
+		this(theSubscriptionMatchingEvaluationResult.getUnsupportedParameter(), theSubscriptionMatchingEvaluationResult.getMatcherShortName());
+	}
+
 	public boolean supported() {
 		return mySupported;
 	}
