@@ -7,11 +7,9 @@ import org.hl7.fhir.dstu3.model.*;
 import org.hl7.fhir.dstu3.model.codesystems.MedicationRequestCategory;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.instance.model.api.IIdType;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.Arrays;
 import java.util.Collections;
 
 import static org.junit.Assert.assertFalse;
@@ -38,6 +36,33 @@ public class InMemorySubscriptionMatcherTestR3 extends BaseSubscriptionDstu3Test
 		assertTrue(result.supported());
 		assertFalse(result.matched());
 	}
+
+
+	/**
+	 * Technically this is an invalid reference in most cases, but this shouldn't choke
+	 * the matcher in the case that it gets used.
+	 */
+	@Test
+	public void testPlaceholderIdInReference() {
+
+		ProcedureRequest pr = new ProcedureRequest();
+		pr.setId("ProcedureRequest/123");
+		pr.setIntent(ProcedureRequest.ProcedureRequestIntent.ORIGINALORDER);
+
+		pr.setSubject(new Reference("urn:uuid:aaaaaaaaaa"));
+		assertMatched(pr, "ProcedureRequest?intent=original-order");
+		assertNotMatched(pr, "ProcedureRequest?subject=Patient/123");
+
+		pr.setSubject(new Reference("Foo/123"));
+		assertMatched(pr, "ProcedureRequest?intent=original-order");
+		assertNotMatched(pr, "ProcedureRequest?subject=Patient/123");
+
+		pr.setSubject(new Reference("Patient/"));
+		assertMatched(pr, "ProcedureRequest?intent=original-order");
+		assertNotMatched(pr, "ProcedureRequest?subject=Patient/123");
+
+	}
+
 
 	@Test
 	public void testResourceById() {

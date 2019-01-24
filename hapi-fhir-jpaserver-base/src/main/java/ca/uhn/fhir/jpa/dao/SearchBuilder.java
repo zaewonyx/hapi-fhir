@@ -80,7 +80,6 @@ import org.hl7.fhir.instance.model.api.IIdType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import org.thymeleaf.util.ListUtils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -100,7 +99,6 @@ import static org.apache.commons.lang3.StringUtils.*;
  * The SearchBuilder is responsible for actually forming the SQL query that handles
  * searches for resources
  */
-@SuppressWarnings("JpaQlInspection")
 @Component
 @Scope("prototype")
 public class SearchBuilder implements ISearchBuilder {

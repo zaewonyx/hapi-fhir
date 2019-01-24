@@ -20,9 +20,9 @@ package ca.uhn.fhir.jpa.subscription.module.subscriber;
  * #L%
  */
 
-import ca.uhn.fhir.jpa.subscription.module.CanonicalSubscription;
+import ca.uhn.fhir.jpa.model.interceptor.api.IInterceptorBroadcaster;
 import ca.uhn.fhir.jpa.model.interceptor.api.Pointcut;
-import ca.uhn.fhir.jpa.model.interceptor.api.IInterceptorRegistry;
+import ca.uhn.fhir.jpa.subscription.module.CanonicalSubscription;
 import ca.uhn.fhir.rest.api.EncodingEnum;
 import ca.uhn.fhir.rest.api.RequestTypeEnum;
 import ca.uhn.fhir.rest.client.api.*;
@@ -52,7 +52,7 @@ public class SubscriptionDeliveringRestHookSubscriber extends BaseSubscriptionDe
 	IResourceRetriever myResourceRetriever;
 	private Logger ourLog = LoggerFactory.getLogger(SubscriptionDeliveringRestHookSubscriber.class);
 	@Autowired
-	private IInterceptorRegistry myInterceptorRegistry;
+	private IInterceptorBroadcaster myInterceptorBroadcaster;
 
 	protected void deliverPayload(ResourceDeliveryMessage theMsg, CanonicalSubscription theSubscription, EncodingEnum thePayloadType, IGenericClient theClient) {
 		IBaseResource payloadResource = getAndMassagePayload(theMsg, theSubscription);
@@ -133,7 +133,7 @@ public class SubscriptionDeliveringRestHookSubscriber extends BaseSubscriptionDe
 		CanonicalSubscription subscription = theMessage.getSubscription();
 
 		// Interceptor call: SUBSCRIPTION_BEFORE_REST_HOOK_DELIVERY
-		if (!myInterceptorRegistry.callHooks(Pointcut.SUBSCRIPTION_BEFORE_REST_HOOK_DELIVERY, theMessage, subscription)) {
+		if (!myInterceptorBroadcaster.callHooks(Pointcut.SUBSCRIPTION_BEFORE_REST_HOOK_DELIVERY, theMessage, subscription)) {
 			return;
 		}
 
@@ -169,7 +169,7 @@ public class SubscriptionDeliveringRestHookSubscriber extends BaseSubscriptionDe
 		deliverPayload(theMessage, subscription, payloadType, client);
 
 		// Interceptor call: SUBSCRIPTION_AFTER_REST_HOOK_DELIVERY
-		if (!myInterceptorRegistry.callHooks(Pointcut.SUBSCRIPTION_AFTER_REST_HOOK_DELIVERY, theMessage, subscription)) {
+		if (!myInterceptorBroadcaster.callHooks(Pointcut.SUBSCRIPTION_AFTER_REST_HOOK_DELIVERY, theMessage, subscription)) {
 			//noinspection UnnecessaryReturnStatement
 			return;
 		}

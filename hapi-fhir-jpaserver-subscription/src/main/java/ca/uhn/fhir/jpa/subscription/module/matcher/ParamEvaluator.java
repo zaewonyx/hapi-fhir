@@ -30,7 +30,7 @@ public class ParamEvaluator {
 
 	}
 
-	public SubscriptionMatchingEvaluationResult evaluateParam(String theParamName, List<List<? extends IQueryParameterType>> theAndOrParams) {
+	private SubscriptionMatchingEvaluationResult evaluateParam(String theParamName, List<List<? extends IQueryParameterType>> theAndOrParams) {
 		if (theAndOrParams.isEmpty()) {
 			return new SubscriptionMatchingEvaluationResult(mySearchParameterMap);
 		}
@@ -51,18 +51,17 @@ public class ParamEvaluator {
 		return new SubscriptionMatchingEvaluationResult(mySearchParameterMap);
 	}
 
-	private static boolean hasChain(List<List<? extends IQueryParameterType>> theAndOrParams) {
+	private boolean hasChain(List<List<? extends IQueryParameterType>> theAndOrParams) {
 		return theAndOrParams.stream().flatMap(List::stream).anyMatch(param -> param instanceof ReferenceParam && ((ReferenceParam) param).getChain() != null);
 	}
 
-	private static boolean hasQualifiers(List<List<? extends IQueryParameterType>> theAndOrParams) {
+	private boolean hasQualifiers(List<List<? extends IQueryParameterType>> theAndOrParams) {
 		return theAndOrParams.stream().flatMap(List::stream).anyMatch(param -> param.getQueryParameterQualifier() != null);
 	}
 
-	private static boolean hasPrefixes(List<List<? extends IQueryParameterType>> theAndOrParams) {
+	private boolean hasPrefixes(List<List<? extends IQueryParameterType>> theAndOrParams) {
 		Predicate<IQueryParameterType> hasPrefixPredicate = param -> param instanceof BaseParamWithPrefix &&
 			((BaseParamWithPrefix) param).getPrefix() != null;
 		return theAndOrParams.stream().flatMap(List::stream).anyMatch(hasPrefixPredicate);
 	}
-
 }

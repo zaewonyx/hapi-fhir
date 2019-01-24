@@ -96,10 +96,10 @@ public class SubscriptionCanonicalizer<S extends IBaseResource> {
 			retVal.setIdElement(subscription.getIdElement());
 			retVal.setPayloadString(subscription.getChannel().getPayload());
 
-			if (retVal.getChannelType() == CanonicalSubscriptionChannelType.EMAIL) {
+				if (retVal.getChannelType() == CanonicalSubscriptionChannelType.EMAIL) {
 				String from;
 				String subjectTemplate;
-				String bodyTemplate;
+
 				try {
 					from = subscription.getChannel().getExtensionString(SubscriptionConstants.EXT_SUBSCRIPTION_EMAIL_FROM);
 					subjectTemplate = subscription.getChannel().getExtensionString(SubscriptionConstants.EXT_SUBSCRIPTION_SUBJECT_TEMPLATE);
@@ -111,6 +111,7 @@ public class SubscriptionCanonicalizer<S extends IBaseResource> {
 			}
 
 			if (retVal.getChannelType() == CanonicalSubscriptionChannelType.RESTHOOK) {
+
 				String stripVersionIds;
 				String deliverLatestVersion;
 				try {
