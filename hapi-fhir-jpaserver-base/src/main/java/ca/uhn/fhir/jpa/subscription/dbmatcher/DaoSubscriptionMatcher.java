@@ -63,7 +63,7 @@ public class DaoSubscriptionMatcher implements ISubscriptionMatcher {
 
 		ourLog.debug("Subscription check found {} results for query: {}", results.size(), criteria);
 
-		return new SubscriptionMatchResult(results.size() > 0, "DATABASE");
+		return SubscriptionMatchResult.fromBoolean(results.size() > 0);
 	}
 	
 	/**

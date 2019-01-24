@@ -23,6 +23,7 @@ package ca.uhn.fhir.jpa.subscription.module.matcher;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.RuntimeResourceDefinition;
 import ca.uhn.fhir.context.RuntimeSearchParam;
+import ca.uhn.fhir.jpa.model.search.QueryParser;
 import ca.uhn.fhir.jpa.searchparam.MatchUrlService;
 import ca.uhn.fhir.jpa.searchparam.SearchParameterMap;
 import ca.uhn.fhir.jpa.searchparam.extractor.ResourceIndexedSearchParams;
@@ -30,8 +31,6 @@ import ca.uhn.fhir.jpa.searchparam.registry.ISearchParamRegistry;
 import ca.uhn.fhir.jpa.subscription.module.cache.SubscriptionMatchingStrategy;
 import ca.uhn.fhir.model.api.IQueryParameterType;
 import ca.uhn.fhir.rest.api.Constants;
-import ca.uhn.fhir.rest.param.BaseParamWithPrefix;
-import ca.uhn.fhir.rest.param.ReferenceParam;
 import ca.uhn.fhir.rest.param.StringParam;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import org.hl7.fhir.instance.model.api.IAnyResource;
@@ -42,12 +41,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Predicate;
 
 @Service
 public class CriteriaResourceMatcher {
-	// FIXME KHS one place for this (currently two)
-	private static final String CRITERIA = "CRITERIA";
 
 	@Autowired
 	ISearchParamRegistry mySearchParamRegistry;
@@ -55,49 +51,62 @@ public class CriteriaResourceMatcher {
 	SubscriptionStrategyEvaluator mySubscriptionStrategyEvaluator;
 	@Autowired
 	FhirContext myFhirContext;
+	@Autowired
+	private MatchUrlService myMatchUrlService;
 
 	public SubscriptionMatchResult match(String theCriteria, IBaseResource theResource, ResourceIndexedSearchParams theSearchParams) {
+		RuntimeResourceDefinition resourceDef = QueryParser.parseUrlResourceType(myFhirContext, theCriteria);
 
-		SubscriptionMatchingEvaluationResult subscriptionMatchingEvaluationResult = mySubscriptionStrategyEvaluator.determineStrategy(theCriteria);
-		if (subscriptionMatchingEvaluationResult.getMatchingStrategy() == SubscriptionMatchingStrategy.DATABASE) {
-			return new SubscriptionMatchResult(subscriptionMatchingEvaluationResult);
+		if (resourceDef == null) {
+			return SubscriptionMatchResult.unsupportedFromReason(SubscriptionStrategyEvaluator.NO_RESOURCE_DEF);
 		}
 
-		return getSubscriptionMatchResult(theResource, theSearchParams, subscriptionMatchingEvaluationResult.getSearchParameterMap());
+		SearchParameterMap searchParameterMap;
+		try {
+			searchParameterMap = myMatchUrlService.translateMatchUrl(theCriteria, resourceDef);
+		} catch (UnsupportedOperationException e) {
+			return SubscriptionMatchResult.unsupportedFromReason(SubscriptionStrategyEvaluator.PARSE_FAIL);
+		}
+
+		SubscriptionMatchingEvaluationResult subscriptionMatchingEvaluationResult = mySubscriptionStrategyEvaluator.determineStrategy(resourceDef, searchParameterMap);
+		if (subscriptionMatchingEvaluationResult.getMatchingStrategy() == SubscriptionMatchingStrategy.DATABASE) {
+			return SubscriptionMatchResult.unsupported(subscriptionMatchingEvaluationResult);
+		}
+
+		return matchResourceAgainstSearchParams(theResource, theSearchParams, searchParameterMap);
 	}
 
-	private SubscriptionMatchResult getSubscriptionMatchResult(IBaseResource theResource, ResourceIndexedSearchParams theSearchParams, SearchParameterMap theSearchParameterMap) {
+	private SubscriptionMatchResult matchResourceAgainstSearchParams(IBaseResource theResource, ResourceIndexedSearchParams theSearchParams, SearchParameterMap theSearchParameterMap) {
 		for (Map.Entry<String, List<List<? extends IQueryParameterType>>> entry : theSearchParameterMap.entrySet()) {
 			String theParamName = entry.getKey();
 			List<List<? extends IQueryParameterType>> andOrParams = entry.getValue();
-			SubscriptionMatchResult result = matchIdsWithAndOr(theParamName, andOrParams, theResource, theSearchParams);
+			SubscriptionMatchResult result = matchParamWithAndOr(theParamName, andOrParams, theResource, theSearchParams);
 			if (!result.matched()){
 				return result;
 			}
 		}
-		return new SubscriptionMatchResult(true, CRITERIA);
+		return SubscriptionMatchResult.successfulMatch();
 	}
 
-	// This method is modelled from SearchBuilder.searchForIdsWithAndOr()
-	private SubscriptionMatchResult matchIdsWithAndOr(String theParamName, List<List<? extends IQueryParameterType>> theAndOrParams, IBaseResource theResource, ResourceIndexedSearchParams theSearchParams) {
+	private SubscriptionMatchResult matchParamWithAndOr(String theParamName, List<List<? extends IQueryParameterType>> theAndOrParams, IBaseResource theResource, ResourceIndexedSearchParams theSearchParams) {
 		switch (theParamName) {
 			case IAnyResource.SP_RES_ID:
 
-				return new SubscriptionMatchResult(matchIdsAndOr(theAndOrParams, theResource), CRITERIA);
+				return SubscriptionMatchResult.fromBoolean(matchIdsAndOr(theAndOrParams, theResource));
 
 			case IAnyResource.SP_RES_LANGUAGE:
 
-				return new SubscriptionMatchResult(theParamName, CRITERIA);
+				return SubscriptionMatchResult.unsupportedFromParameterAndReason(theParamName, SubscriptionStrategyEvaluator.STANDARD_PARAMETER);
 
 			case Constants.PARAM_HAS:
 
-				return new SubscriptionMatchResult(theParamName, CRITERIA);
+				return SubscriptionMatchResult.unsupportedFromParameterAndReason(theParamName, SubscriptionStrategyEvaluator.STANDARD_PARAMETER);
 
 			case Constants.PARAM_TAG:
 			case Constants.PARAM_PROFILE:
 			case Constants.PARAM_SECURITY:
 
-				return new SubscriptionMatchResult(theParamName, CRITERIA);
+				return SubscriptionMatchResult.unsupportedFromParameterAndReason(theParamName, SubscriptionStrategyEvaluator.STANDARD_PARAMETER);
 
 			default:
 
@@ -128,16 +137,16 @@ public class CriteriaResourceMatcher {
 				case URI:
 				case DATE:
 				case REFERENCE:
-					return new SubscriptionMatchResult(theAndOrParams.stream().anyMatch(nextAnd -> matchParams(theResourceName, theParamName, theParamDef, nextAnd, theSearchParams)), CRITERIA);
+					return SubscriptionMatchResult.fromBoolean(theAndOrParams.stream().anyMatch(nextAnd -> matchParams(theResourceName, theParamName, theParamDef, nextAnd, theSearchParams)));
 				case COMPOSITE:
 				case HAS:
 				case SPECIAL:
 				default:
-					return new SubscriptionMatchResult(theParamName, CRITERIA);
+					return SubscriptionMatchResult.unsupportedFromParameterAndReason(theParamName, SubscriptionStrategyEvaluator.STANDARD_PARAMETER);
 			}
 		} else {
 			if (Constants.PARAM_CONTENT.equals(theParamName) || Constants.PARAM_TEXT.equals(theParamName)) {
-				return new SubscriptionMatchResult(theParamName, CRITERIA);
+				return SubscriptionMatchResult.unsupportedFromParameterAndReason(theParamName, SubscriptionStrategyEvaluator.STANDARD_PARAMETER);
 			} else {
 				throw new InvalidRequestException("Unknown search parameter " + theParamName + " for resource type " + theResourceName);
 			}

@@ -145,7 +145,7 @@ public class InMemorySubscriptionMatcherTestR3 extends BaseSubscriptionDstu3Test
 	}
 
 	@Test
-	public void testObservationContextTypeUnsupported() {
+	public void testObservationFailFastContextTypeUnsupported() {
 		String criteria = "Observation?code=17861-6&context.type=IHD";
 		{
 			Observation obs = new Observation();

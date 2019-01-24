@@ -118,7 +118,7 @@ public class SubscriptionMatchingSubscriber implements MessageHandler {
 				continue;
 			}
 
-			ourLog.info("Subscription {} was matched by resource {} using matcher {}", nextActiveSubscription.getSubscription().getIdElement(myFhirContext).getValue(), resourceId.toUnqualifiedVersionless().getValue(), matchResult.matcherShortName());
+			ourLog.info("Subscription {} was matched by resource {}", nextActiveSubscription.getSubscription().getIdElement(myFhirContext).getValue(), resourceId.toUnqualifiedVersionless().getValue());
 
 			IBaseResource payload = theMsg.getNewPayload(myFhirContext);
 

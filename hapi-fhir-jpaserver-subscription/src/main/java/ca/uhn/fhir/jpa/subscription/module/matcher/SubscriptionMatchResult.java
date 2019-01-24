@@ -25,26 +25,43 @@ public class SubscriptionMatchResult {
 	private final boolean mySupported;
 	private final String myUnsupportedParameter;
 	private final String myUnsupportedReason;
-	private final String myMatcherShortName;
 
-	public SubscriptionMatchResult(boolean theMatch, String theMatcherShortName) {
+	private SubscriptionMatchResult(boolean theMatch) {
 		this.myMatch = theMatch;
 		this.mySupported = true;
 		this.myUnsupportedParameter = null;
 		this.myUnsupportedReason = null;
-		this.myMatcherShortName = theMatcherShortName;
 	}
 
-	public SubscriptionMatchResult(String theUnsupportedParameter, String theMatcherShortName) {
+	private SubscriptionMatchResult(String theUnsupportedParameter, String theUnsupportedReason) {
 		this.myMatch = false;
 		this.mySupported = false;
 		this.myUnsupportedParameter = theUnsupportedParameter;
-		this.myUnsupportedReason = "Parameter not supported";
-		this.myMatcherShortName = theMatcherShortName;
+		this.myUnsupportedReason = theUnsupportedReason;
 	}
 
-	public SubscriptionMatchResult(SubscriptionMatchingEvaluationResult theSubscriptionMatchingEvaluationResult) {
-		this(theSubscriptionMatchingEvaluationResult.getUnsupportedParameter(), theSubscriptionMatchingEvaluationResult.getMatcherShortName());
+	private SubscriptionMatchResult(SubscriptionMatchingEvaluationResult theSubscriptionMatchingEvaluationResult) {
+		this(theSubscriptionMatchingEvaluationResult.getUnsupportedParameter(), theSubscriptionMatchingEvaluationResult.getUnsupportedReason());
+	}
+
+	public static SubscriptionMatchResult unsupported(SubscriptionMatchingEvaluationResult theSubscriptionMatchingEvaluationResult) {
+		return new SubscriptionMatchResult(theSubscriptionMatchingEvaluationResult);
+	}
+
+	public static SubscriptionMatchResult successfulMatch() {
+		return new SubscriptionMatchResult(true);
+	}
+
+	public static SubscriptionMatchResult fromBoolean(boolean theMatched) {
+		return new SubscriptionMatchResult(theMatched);
+	}
+
+	public static SubscriptionMatchResult unsupportedFromReason(String theUnsupportedReason) {
+		return new SubscriptionMatchResult(null, theUnsupportedReason);
+	}
+
+	public static SubscriptionMatchResult unsupportedFromParameterAndReason(String theUnsupportedParameter, String theUnsupportedReason) {
+		return new SubscriptionMatchResult(theUnsupportedParameter, theUnsupportedReason);
 	}
 
 	public boolean supported() {
@@ -56,14 +73,9 @@ public class SubscriptionMatchResult {
 	}
 
 	public String getUnsupportedReason() {
-		return "Parameter: <" + myUnsupportedParameter + "> Reason: " + myUnsupportedReason;
-	}
-
-	/**
-	 * Returns a short name of the matcher that generated this
-	 * response, for use in logging
-	 */
-	public String matcherShortName() {
-		return myMatcherShortName;
+		if (myUnsupportedParameter != null) {
+			return "Parameter: <" + myUnsupportedParameter + "> Reason: " + myUnsupportedReason;
+		}
+		return myUnsupportedReason;
 	}
 }
