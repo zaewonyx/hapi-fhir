@@ -2246,6 +2246,7 @@
 				<module>hapi-fhir-jpaserver-elasticsearch</module>
 				<module>hapi-fhir-jpaserver-example</module>
 				<module>hapi-fhir-jpaserver-migrate</module>
+				<module>hapi-fhir-jpaserver-test</module>
 				<module>restful-server-example</module>
 				<module>restful-server-example-test</module>
 				<module>hapi-fhir-testpage-overlay</module>

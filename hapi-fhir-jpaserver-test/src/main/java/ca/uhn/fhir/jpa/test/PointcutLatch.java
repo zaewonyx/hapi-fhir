@@ -1,10 +1,10 @@
-package ca.uhn.fhir.jpa.subscription.module;
+package ca.uhn.fhir.jpa.test;
 
-import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.jpa.model.interceptor.api.HookParams;
 import ca.uhn.fhir.jpa.model.interceptor.api.IAnonymousLambdaHook;
 import ca.uhn.fhir.jpa.model.interceptor.api.Pointcut;
 import org.hl7.fhir.instance.model.api.IBaseResource;
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,9 +15,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 public class PointcutLatch implements IAnonymousLambdaHook {
 	private static final Logger ourLog = LoggerFactory.getLogger(PointcutLatch.class);
@@ -67,8 +64,8 @@ public class PointcutLatch implements IAnonymousLambdaHook {
 
 	public void awaitExpectedWithTimeout(int timeoutSecond) throws InterruptedException {
 		try {
-			assertNotNull(getName() + " awaitExpected() called before setExpected() called.", myCountdownLatch);
-			assertTrue(getName() + " timed out waiting " + timeoutSecond + " seconds for latch to be triggered.", myCountdownLatch.await(timeoutSecond, TimeUnit.SECONDS));
+			Assert.assertNotNull(getName() + " awaitExpected() called before setExpected() called.", myCountdownLatch);
+			Assert.assertTrue(getName() + " timed out waiting " + timeoutSecond + " seconds for latch to be triggered.", myCountdownLatch.await(timeoutSecond, TimeUnit.SECONDS));
 
 			if (myFailure.get() != null) {
 				String error = getName() + ": " + myFailure.get();
@@ -106,10 +103,6 @@ public class PointcutLatch implements IAnonymousLambdaHook {
 			if (object instanceof IBaseResource) {
 				IBaseResource resource = (IBaseResource) object;
 				return "Resource " + resource.getIdElement().getValue();
-			} else if (object instanceof ResourceModifiedMessage) {
-				ResourceModifiedMessage resourceModifiedMessage = (ResourceModifiedMessage)object;
-				// FIXME KHS can we get the context from the payload?
-				return "ResourceModified Message { " + resourceModifiedMessage.getOperationType() + ", " + resourceModifiedMessage.getNewPayload(FhirContext.forDstu3()).getIdElement().getValue() + "}";
 			} else {
 				return object.toString();
 			}

@@ -115,6 +115,11 @@ public class ResourceModifiedMessage implements IResourceMessage {
 		}
 	}
 
+	@Override
+	public String toString() {
+		return super.toString() + " { " + getOperationType() + ", " + myPayloadId + "}";
+	}
+
 	private void setNewPayload(FhirContext theCtx, IBaseResource theNewPayload) {
 		/*
 		 * References with placeholders would be invalid by the time we get here, and

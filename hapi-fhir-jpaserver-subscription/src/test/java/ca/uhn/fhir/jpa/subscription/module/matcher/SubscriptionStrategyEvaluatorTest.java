@@ -7,8 +7,8 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertEquals;
-import static org.junit.matchers.JUnitMatchers.containsString;
 
 public class SubscriptionStrategyEvaluatorTest extends BaseSubscriptionDstu3Test {
 	@Autowired
