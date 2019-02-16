@@ -1,4 +1,4 @@
-package ca.uhn.fhir.jpa.subscription.module;
+package ca.uhn.fhir.jpa.model.interceptor.latch;
 
 import org.hl7.fhir.instance.model.api.IBaseResource;
 
