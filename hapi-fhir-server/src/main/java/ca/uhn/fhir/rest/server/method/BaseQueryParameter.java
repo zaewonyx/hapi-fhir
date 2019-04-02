@@ -29,7 +29,6 @@ import java.util.Set;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.QualifiedParamList;
 import ca.uhn.fhir.rest.api.RestSearchParameterTypeEnum;
-import ca.uhn.fhir.rest.api.server.IRequestDetails;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.param.QualifierDetails;
 import ca.uhn.fhir.rest.server.exceptions.InternalErrorException;
