@@ -97,7 +97,7 @@
 	
 	<feature name='hapi-fhir-server' version='${project.version}' start-level='50'>
         <feature version='${project.version}'>hapi-fhir</feature>
-        <!-- <bundle>mvn:javax.annotation/javax.annotation-api/1.2</bundle> -->
+        <bundle dependency='true'>mvn:org.apache.commons/commons-collections4/${commons_collections4_version}</bundle>
         <bundle>mvn:ca.uhn.hapi.fhir/hapi-fhir-server/${project.version}</bundle>
     </feature>
 
