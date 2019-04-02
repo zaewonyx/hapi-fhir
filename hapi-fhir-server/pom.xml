@@ -9,7 +9,7 @@
 	</parent>
 
 	<artifactId>hapi-fhir-server</artifactId>
-	<packaging>jar</packaging>
+	<packaging>bundle</packaging>
 
 	<name>HAPI FHIR - Server Framework</name>
 
@@ -96,6 +96,18 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
 					<argLine>@{argLine} -Dfile.encoding=UTF-8 -Xmx712m</argLine>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<extensions>true</extensions>
+				<configuration>
+					<instructions>
+						<Import-Package>
+							*
+						</Import-Package>
+					</instructions>
 				</configuration>
 			</plugin>
 		</plugins>
