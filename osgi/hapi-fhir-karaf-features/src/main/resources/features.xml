@@ -39,15 +39,23 @@
 		<feature version='${project.version}'>hapi-fhir</feature>
 		<bundle dependency='true'>mvn:org.apache.httpcomponents/httpcore-osgi/${httpcore_version}</bundle>
 		<bundle dependency='true'>mvn:org.apache.httpcomponents/httpclient-osgi/${httpclient_version}</bundle>
+		<bundle dependency='true'>mvn:ca.uhn.hapi.fhir/org.hl7.fhir.utilities/4.1.42-SNAPSHOT</bundle>
 		<bundle>mvn:ca.uhn.hapi.fhir/hapi-fhir-client/${project.version}</bundle>
+		
 	</feature>
 
+	<feature name='hapi-fhir-server' version='${project.version}' start-level='50'>
+        <feature version='${project.version}'>hapi-fhir</feature>
+        <bundle dependency='true'>mvn:org.apache.commons/commons-collections4/4.0</bundle>
+        <bundle>mvn:ca.uhn.hapi.fhir/hapi-fhir-server/${project.version}</bundle>
+    </feature>
+    
 	<feature name='hapi-fhir-utilities' version='${project.version}' start-level='50'>
 		<feature version='${project.version}'>hapi-fhir</feature>
 		<bundle dependency='true'>mvn:com.google.code.gson/gson/${gson_version}</bundle>
 		<bundle dependency='true'>mvn:commons-codec/commons-codec/${commons_codec_version}</bundle>
 		<bundle dependency='true'>mvn:commons-io/commons-io/${commons_io_version}</bundle>
-		<bundle>mvn:ca.uhn.hapi.fhir/hapi-fhir-utilities/${project.version}</bundle>
+		<bundle>mvn:ca.uhn.hapi.fhir/org.hl7.fhir.utilities/4.1.42-SNAPSHOT</bundle>
 	</feature>
 
 	<feature name='hapi-fhir-dstu2' version='${project.version}' start-level='50'>
@@ -72,13 +80,19 @@
 	<feature name='hapi-fhir-dstu3' version='${project.version}' start-level='50'>
 		<feature version='${project.version}'>hapi-fhir</feature>
 		<feature version='${project.version}'>hapi-fhir-utilities</feature>
+		<bundle>mvn:ca.uhn.hapi.fhir/org.hl7.fhir.dstu3/4.1.42-SNAPSHOT</bundle>
 		<bundle>mvn:ca.uhn.hapi.fhir/hapi-fhir-structures-dstu3/${project.version}</bundle>
 	</feature>
 
 	<feature name='hapi-fhir-r4' version='${project.version}' start-level='50'>
 		<feature version='${project.version}'>hapi-fhir</feature>
 		<feature version='${project.version}'>hapi-fhir-utilities</feature>
+		<bundle>mvn:ca.uhn.hapi.fhir/org.hl7.fhir.r4/4.1.42-SNAPSHOT</bundle>
 		<bundle>mvn:ca.uhn.hapi.fhir/hapi-fhir-structures-r4/${project.version}</bundle>
+	</feature>
+	
+	<feature name='hapi-fhir-ucum' version='${project.version}' start-level='50'>
+		<bundle>wrap:mvn:org.fhir/ucum/${ucum_version}</bundle>
 	</feature>
 
 	<feature name='hapi-fhir-ph-schematron' version='${project.version}' start-level='50'>
